@@ -1,6 +1,6 @@
 [submodule "tests"]
 	path = tests
-	url = https://course-gitlab.tuni.fi/compcs300_dsa_spring_2026/tests.git
+	url = ../tests
 [submodule "course_code"]
 	path = course_code
-	url = https://course-gitlab.tuni.fi/compcs300_dsa_spring_2026/course_code.git
+	url = ../course_code
