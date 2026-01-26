@@ -1,1 +1,4 @@
-This is a template readme file to enforce main default branch. Edit this file as you see fit.
+
+# COMP.CS.300 Spring 2026
+
+https://plus.tuni.fi/COMP.CS.300/spring-2026/
