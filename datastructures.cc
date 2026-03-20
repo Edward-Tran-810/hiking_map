@@ -31,43 +31,59 @@ Datastructures::Datastructures()
 
 Datastructures::~Datastructures()
 {
-    // Write any cleanup you need here
+    clear_all();
 }
 
 int Datastructures::place_count()
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    return places_.size();
 }
 
 void Datastructures::clear_all()
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    places_.clear();
 }
 
 std::vector<PlaceID> Datastructures::all_places()
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    std::vector<PlaceID> ids;
+    for (const auto& it : places_)
+    {
+        ids.push_back(it.first);
+    }
+
+    return ids;
 }
 
-bool Datastructures::add_place(PlaceID /*id*/, const Name& /*name*/, PlaceType /*type*/, Coord /*xy*/)
+bool Datastructures::add_place(PlaceID id, const Name& name, PlaceType type, Coord xy)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    if (places_.find(id) != places_.end())
+    {
+        return false;
+    }
+
+    places_[id] = Place(name, type, xy);
+    return true;
 }
 
-std::pair<Name, PlaceType> Datastructures::get_place_name_type(PlaceID /*id*/)
+std::pair<Name, PlaceType> Datastructures::get_place_name_type(PlaceID id)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    if (places_.find(id) != places_.end())
+    {
+        return {places_[id].name, places_[id].type};
+    }
+
+    return {NO_NAME, PlaceType::NO_TYPE};
 }
 
-Coord Datastructures::get_place_coord(PlaceID /*id*/)
+Coord Datastructures::get_place_coord(PlaceID id)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    if (places_.find(id) != places_.end())
+    {
+        return places_[id].coord;
+    }
+
+    return NO_COORD;
 }
 
 std::vector<PlaceID> Datastructures::places_alphabetically()

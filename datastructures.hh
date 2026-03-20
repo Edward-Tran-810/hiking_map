@@ -10,6 +10,7 @@
 #include <limits>
 #include <functional>
 #include <source_location>
+#include <unordered_map>
 
 // Types for IDs
 using PlaceID = long long int;
@@ -248,7 +249,13 @@ public:
     Distance trim_ways();
 
 private:
-    // Add stuff needed for your class implementation here
+    struct Place {
+        Name name;
+        PlaceType type;
+        Coord coord;
+    };
+
+    std::unordered_map<PlaceID, Place> places_;
 };
 
 #endif // DATASTRUCTURES_HH
