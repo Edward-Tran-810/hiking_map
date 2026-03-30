@@ -202,40 +202,81 @@ bool Datastructures::change_place_name(PlaceID id, const Name& newname)
     return false;
 }
 
-bool Datastructures::add_area(AreaID /*id*/, const Name &/*name*/, std::vector<Coord> /*coords*/)
+bool Datastructures::add_area(AreaID id, const Name& name, std::vector<Coord> coords)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    if (areas_.find(id) != areas_.end())
+    {
+        return false;
+    }
+
+    areas_[id] = Area(name, coords, NO_AREA, {});
+    return true;
 }
 
-Name Datastructures::get_area_name(AreaID /*id*/)
+Name Datastructures::get_area_name(AreaID id)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    auto it = areas_.find(id);
+    if (it != areas_.end())
+    {
+        return it->second.name;
+    }
+
+    return NO_NAME;
 }
 
-std::vector<Coord> Datastructures::get_area_coords(AreaID /*id*/)
+std::vector<Coord> Datastructures::get_area_coords(AreaID id)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    auto it = areas_.find(id);
+    if (it != areas_.end())
+    {
+        return it->second.coords;
+    }
+
+    return {NO_COORD};
 }
 
 std::vector<AreaID> Datastructures::all_areas()
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    std::vector<AreaID> ids;
+    for (auto& [id, area] : areas_)
+    {
+        ids.push_back(id);
+    }
+
+    return ids;
 }
 
-bool Datastructures::add_subarea_to_area(AreaID /*id*/, AreaID /*parentid*/)
+bool Datastructures::add_subarea_to_area(AreaID id, AreaID parentid)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    auto it = areas_.find(id);
+    auto parent_it = areas_.find(parentid);
+    if (it == areas_.end() or parent_it == areas_.end()
+        or it->second.parent != NO_AREA)
+    {
+        return false;
+    }
+
+    it->second.parent = parentid;
+    parent_it->second.children.push_back(id);
+
+    return true;
 }
 
-std::vector<AreaID> Datastructures::subarea_in_areas(AreaID /*id*/)
+std::vector<AreaID> Datastructures::subarea_in_areas(AreaID id)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    if (areas_.find(id) == areas_.end())
+    {
+        return {NO_AREA};
+    }
+
+    std::vector<AreaID> result;
+    while (areas_.at(id).parent != NO_AREA)
+    {
+        id = areas_.at(id).parent;
+        result.push_back(id);
+    }
+
+    return result;
 }
 
 std::vector<AreaID> Datastructures::all_subareas_in_area(AreaID /*id*/)
