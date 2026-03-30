@@ -42,12 +42,16 @@ int Datastructures::place_count()
 void Datastructures::clear_all()
 {
     places_.clear();
+    areas_.clear();
 }
 
 // Returns a vector containing IDs of all stored places
 std::vector<PlaceID> Datastructures::all_places()
 {
     std::vector<PlaceID> ids;
+
+    // Pre-allocate memory for all place IDs to avoid repeated reallocations during push_back
+    ids.reserve(place_count());
 
     // Iterate through all places and collect their IDs
     for (const auto& [id, place] : places_)
@@ -202,20 +206,28 @@ bool Datastructures::change_place_name(PlaceID id, const Name& newname)
     return false;
 }
 
+// Adds a new area to the data structure
+// Returns false if the area ID already exists, true otherwise
 bool Datastructures::add_area(AreaID id, const Name& name, std::vector<Coord> coords)
 {
+    // Check if area with same ID already exists
     if (areas_.find(id) != areas_.end())
     {
         return false;
     }
 
+    // Insert new area
     areas_[id] = Area(name, coords, NO_AREA, {});
     return true;
 }
 
+// Returns the name of an area by ID
+// If not found, returns NO_NAME
 Name Datastructures::get_area_name(AreaID id)
 {
     auto it = areas_.find(id);
+
+    // If area exists, return its name
     if (it != areas_.end())
     {
         return it->second.name;
@@ -224,9 +236,13 @@ Name Datastructures::get_area_name(AreaID id)
     return NO_NAME;
 }
 
+// Returns the coordinates of an area by ID
+// If not found, returns a vector with single item NO_COORD
 std::vector<Coord> Datastructures::get_area_coords(AreaID id)
 {
     auto it = areas_.find(id);
+
+    // If area exists, return its coordinates
     if (it != areas_.end())
     {
         return it->second.coords;
@@ -235,9 +251,16 @@ std::vector<Coord> Datastructures::get_area_coords(AreaID id)
     return {NO_COORD};
 }
 
+
+// Returns a vector containing IDs of all stored areas
 std::vector<AreaID> Datastructures::all_areas()
 {
     std::vector<AreaID> ids;
+
+    // Pre-allocate memory for all area IDs to avoid repeated reallocations during push_back
+    ids.reserve(areas_.size());
+
+    // Iterate through all places and collect their IDs
     for (auto& [id, area] : areas_)
     {
         ids.push_back(id);
@@ -246,34 +269,47 @@ std::vector<AreaID> Datastructures::all_areas()
     return ids;
 }
 
+// Links an area as a subarea to another area
+// Returns false if IDs don't exist or if subarea already has a parent
 bool Datastructures::add_subarea_to_area(AreaID id, AreaID parentid)
 {
     auto it = areas_.find(id);
     auto parent_it = areas_.find(parentid);
+
+    // If either ID is missing or subarea already belongs elsewhere, return false
     if (it == areas_.end() or parent_it == areas_.end()
         or it->second.parent != NO_AREA)
     {
         return false;
     }
 
+    // Set parent and add to parent's children list
     it->second.parent = parentid;
     parent_it->second.children.push_back(id);
 
     return true;
 }
 
+// Returns a vector of parent areas in ascending order of hierarchy
+// If ID is not found, returns a vector containing NO_AREA
 std::vector<AreaID> Datastructures::subarea_in_areas(AreaID id)
 {
-    if (areas_.find(id) == areas_.end())
+    auto it = areas_.find(id);
+
+    // If area doesn't exist, return {NO_AREA} vector
+    if (it == areas_.end())
     {
         return {NO_AREA};
     }
 
     std::vector<AreaID> result;
-    while (areas_.at(id).parent != NO_AREA)
+
+    // Traverse up the parent chain until the root is reached
+    while (it->second.parent != NO_AREA)
     {
-        id = areas_.at(id).parent;
-        result.push_back(id);
+        AreaID parent_id = it->second.parent;
+        result.push_back(parent_id);
+        it = areas_.find(parent_id); // Move the iterator to the parent
     }
 
     return result;
