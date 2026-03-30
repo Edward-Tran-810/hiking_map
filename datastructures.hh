@@ -110,76 +110,74 @@ public:
     Datastructures();
     ~Datastructures();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1)
+    // Short rationale for estimate: Returns size of unordered_map in constant time.
     int place_count();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: Clears all elements from the unordered_map, which requires destroying each stored element.
     void clear_all();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: Iterates through all elements in the map once.
     std::vector<PlaceID> all_places();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1) average
+    // Short rationale for estimate: unordered_map lookup and insertion is constant time on average.
     bool add_place(PlaceID id, Name const& name, PlaceType type, Coord xy);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1) average
+    // Short rationale for estimate: unordered_map lookup is constant time on average.
     std::pair<Name, PlaceType> get_place_name_type(PlaceID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1) average
+    // Short rationale for estimate: unordered_map lookup is constant time on average.
     Coord get_place_coord(PlaceID id);
 
-    // We recommend you implement the operations below only after implementing the ones above
-
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n log n)
+    // Short rationale for estimate: Copies all IDs (O(n)) and sorts them using comparison (O(n log n)).
     std::vector<PlaceID> places_alphabetically();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n log n)
+    // Short rationale for estimate: Copies all IDs (O(n)) and sorts them based on computed distances (O(n log n)).
     std::vector<PlaceID> places_coord_order();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: Requires scanning all elements to find matching names.
     std::vector<PlaceID> find_places_name(Name const& name);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: Requires scanning all elements to find matching types.
     std::vector<PlaceID> find_places_type(PlaceType type);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1) average
+    // Short rationale for estimate: unordered_map modification is constant time on average.
     bool change_place_name(PlaceID id, Name const& newname);
 
     // We recommend you implement the operations below only after implementing the ones above
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1) average
+    // Short rationale for estimate: unordered_map lookup and insertion are constant time on average.
     bool add_area(AreaID id, Name const& name, std::vector<Coord> coords);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1) average
+    // Short rationale for estimate: unordered_map lookup is constant time on average.
     Name get_area_name(AreaID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1) average
+    // Short rationale for estimate: unordered_map lookup is constant time on average.
     std::vector<Coord> get_area_coords(AreaID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: Must iterate through all areas to collect their IDs.
     std::vector<AreaID> all_areas();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1) average
+    // Short rationale for estimate: Lookup of both child and parent in unordered_map is constant time on average; adding to a vector is O(1) amortized.
     bool add_subarea_to_area(AreaID id, AreaID parentid);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(h)
+    // Short rationale for estimate: Traverses the parent chain up to tree height h (number of ancestors) to collect all containing areas.
     std::vector<AreaID> subarea_in_areas(AreaID id);
 
     // We recommend you implement the operations below only after implementing the ones above
@@ -256,6 +254,16 @@ private:
     };
 
     std::unordered_map<PlaceID, Place> places_;
+
+    struct Area {
+        Name name;
+        std::vector<Coord> coords;
+
+        AreaID parent;
+        std::vector<AreaID> children;
+    };
+
+    std::unordered_map<AreaID, Area> areas_;
 };
 
 #endif // DATASTRUCTURES_HH

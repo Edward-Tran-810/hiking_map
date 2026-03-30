@@ -1,10 +1,9 @@
 // Datastructures.cc
 
 #include "datastructures.hh"
-
 #include <random>
-
 #include <cmath>
+#include <algorithm>
 
 std::minstd_rand rand_engine; // Reasonably quick pseudo-random generator
 
@@ -31,9 +30,10 @@ Datastructures::Datastructures()
 
 Datastructures::~Datastructures()
 {
-    clear_all();
+    clear_all(); // Remove all when object is destroyed
 }
 
+// Returns the total number of places stored
 int Datastructures::place_count()
 {
     return places_.size();
@@ -44,76 +44,162 @@ void Datastructures::clear_all()
     places_.clear();
 }
 
+// Returns a vector containing IDs of all stored places
 std::vector<PlaceID> Datastructures::all_places()
 {
     std::vector<PlaceID> ids;
-    for (const auto& it : places_)
+
+    // Iterate through all places and collect their IDs
+    for (const auto& [id, place] : places_)
     {
-        ids.push_back(it.first);
+        ids.push_back(id);
     }
 
     return ids;
 }
 
+// Adds a new place to the data structure
+// Returns false if the place ID already exists, true otherwise
 bool Datastructures::add_place(PlaceID id, const Name& name, PlaceType type, Coord xy)
 {
+    // Check if place with same ID already exists
     if (places_.find(id) != places_.end())
     {
         return false;
     }
 
+    // Insert new place
     places_[id] = Place(name, type, xy);
     return true;
 }
 
+// Returns the name and type of a place by ID
+// If not found, returns NO_NAME and NO_TYPE
 std::pair<Name, PlaceType> Datastructures::get_place_name_type(PlaceID id)
 {
-    if (places_.find(id) != places_.end())
+    auto it = places_.find(id);
+
+    // If place exists, return its name and type
+    if (it != places_.end())
     {
-        return {places_[id].name, places_[id].type};
+        return {it->second.name, it->second.type};
     }
 
+    // If place not found, return default values
     return {NO_NAME, PlaceType::NO_TYPE};
 }
 
+// Returns the coordinates of a place by ID
+// If not found, returns NO_COORD
 Coord Datastructures::get_place_coord(PlaceID id)
 {
-    if (places_.find(id) != places_.end())
+    auto it = places_.find(id);
+
+    // If place exists, return its coordinates
+    if (it != places_.end())
     {
-        return places_[id].coord;
+        return it->second.coord;
     }
 
+    // If place not found, return default coordinate
     return NO_COORD;
 }
 
+// Returns all place IDs sorted alphabetically by their name
 std::vector<PlaceID> Datastructures::places_alphabetically()
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    // Get all place IDs
+    std::vector<PlaceID> ids = all_places();
+
+    // Sort IDs based on the name of the corresponding place
+    sort(ids.begin(), ids.end(), [this](PlaceID a, PlaceID b) {
+        const auto& pa = places_.at(a);
+        const auto& pb = places_.at(b);
+        return pa.name < pb.name;
+    });
+
+    return ids;
 }
 
+// Returns all place IDs sorted by their distance from origin (0,0)
+// If distances are equal, sort by y-coordinate
 std::vector<PlaceID> Datastructures::places_coord_order()
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    // Get all place IDs
+    std::vector<PlaceID> ids = all_places();
+
+    // Sort IDs based on coordinate distance
+    sort(ids.begin(), ids.end(), [this](PlaceID a, PlaceID b){
+        Coord ca = places_.at(a).coord;
+        Coord cb = places_.at(b).coord;
+
+        // Calculate squared distance
+        // Convert to datatype long long for preventing int overflow
+        long long dist_a = (long long)ca.x * ca.x + (long long)ca.y * ca.y;
+        long long dist_b = (long long)cb.x * cb.x + (long long)cb.y * cb.y;
+
+        // Primary sort: distance from origin
+        if (dist_a != dist_b)
+        {
+            return dist_a < dist_b;
+        }
+
+        // Secondary sort: y-coordinate
+        return ca.y < cb.y;
+    });
+
+    return ids;
 }
 
-std::vector<PlaceID> Datastructures::find_places_name(Name const& /*name*/)
+// Finds and returns all place IDs with a given name
+std::vector<PlaceID> Datastructures::find_places_name(Name const& name)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    std::vector<PlaceID> names;
+
+    // Iterate through all places and match by name
+    for (const auto& [id, place] : places_)
+    {
+        if (place.name == name)
+        {
+            names.push_back(id);
+        }
+    }
+
+    return names;
 }
 
-std::vector<PlaceID> Datastructures::find_places_type(PlaceType /*type*/)
+// Finds and returns all place IDs with a given type
+std::vector<PlaceID> Datastructures::find_places_type(PlaceType type)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    std::vector<PlaceID> types;
+
+    // Iterate through all places and match by type
+    for (const auto& [id, place] : places_)
+    {
+        if (place.type == type)
+        {
+            types.push_back(id);
+        }
+    }
+
+    return types;
 }
 
-bool Datastructures::change_place_name(PlaceID /*id*/, const Name& /*newname*/)
+// Changes the name of a place with the given ID
+// Returns true if the place exists and was updated, false otherwise
+bool Datastructures::change_place_name(PlaceID id, const Name& newname)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    auto it = places_.find(id);
+
+    // If place exists, update its name
+    if (it != places_.end())
+    {
+        it->second.name = newname;
+        return true;
+    }
+
+    // If place not found
+    return false;
 }
 
 bool Datastructures::add_area(AreaID /*id*/, const Name &/*name*/, std::vector<Coord> /*coords*/)
