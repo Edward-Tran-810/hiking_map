@@ -33,18 +33,21 @@ Datastructures::~Datastructures()
     clear_all(); // Remove all when object is destroyed
 }
 
+// TESTING
 // Returns the total number of places stored
 int Datastructures::place_count()
 {
     return places_.size();
 }
 
+// TESTING
 void Datastructures::clear_all()
 {
     places_.clear();
     areas_.clear();
 }
 
+// TESTING
 // Returns a vector containing IDs of all stored places
 std::vector<PlaceID> Datastructures::all_places()
 {
@@ -62,6 +65,7 @@ std::vector<PlaceID> Datastructures::all_places()
     return ids;
 }
 
+// TESTING
 // Adds a new place to the data structure
 // Returns false if the place ID already exists, true otherwise
 bool Datastructures::add_place(PlaceID id, const Name& name, PlaceType type, Coord xy)
@@ -77,6 +81,7 @@ bool Datastructures::add_place(PlaceID id, const Name& name, PlaceType type, Coo
     return true;
 }
 
+// TESTING
 // Returns the name and type of a place by ID
 // If not found, returns NO_NAME and NO_TYPE
 std::pair<Name, PlaceType> Datastructures::get_place_name_type(PlaceID id)
@@ -93,6 +98,7 @@ std::pair<Name, PlaceType> Datastructures::get_place_name_type(PlaceID id)
     return {NO_NAME, PlaceType::NO_TYPE};
 }
 
+// TESTING
 // Returns the coordinates of a place by ID
 // If not found, returns NO_COORD
 Coord Datastructures::get_place_coord(PlaceID id)
@@ -109,6 +115,7 @@ Coord Datastructures::get_place_coord(PlaceID id)
     return NO_COORD;
 }
 
+// TESTING
 // Returns all place IDs sorted alphabetically by their name
 std::vector<PlaceID> Datastructures::places_alphabetically()
 {
@@ -125,6 +132,7 @@ std::vector<PlaceID> Datastructures::places_alphabetically()
     return ids;
 }
 
+// TESTING
 // Returns all place IDs sorted by their distance from origin (0,0)
 // If distances are equal, sort by y-coordinate
 std::vector<PlaceID> Datastructures::places_coord_order()
@@ -155,6 +163,7 @@ std::vector<PlaceID> Datastructures::places_coord_order()
     return ids;
 }
 
+// TESTING
 // Finds and returns all place IDs with a given name
 std::vector<PlaceID> Datastructures::find_places_name(Name const& name)
 {
@@ -172,6 +181,7 @@ std::vector<PlaceID> Datastructures::find_places_name(Name const& name)
     return names;
 }
 
+// TESTING
 // Finds and returns all place IDs with a given type
 std::vector<PlaceID> Datastructures::find_places_type(PlaceType type)
 {
@@ -189,6 +199,7 @@ std::vector<PlaceID> Datastructures::find_places_type(PlaceType type)
     return types;
 }
 
+// TESTING
 // Changes the name of a place with the given ID
 // Returns true if the place exists and was updated, false otherwise
 bool Datastructures::change_place_name(PlaceID id, const Name& newname)
@@ -206,6 +217,7 @@ bool Datastructures::change_place_name(PlaceID id, const Name& newname)
     return false;
 }
 
+// TESTING
 // Adds a new area to the data structure
 // Returns false if the area ID already exists, true otherwise
 bool Datastructures::add_area(AreaID id, const Name& name, std::vector<Coord> coords)
@@ -221,6 +233,7 @@ bool Datastructures::add_area(AreaID id, const Name& name, std::vector<Coord> co
     return true;
 }
 
+// TESTING
 // Returns the name of an area by ID
 // If not found, returns NO_NAME
 Name Datastructures::get_area_name(AreaID id)
@@ -236,6 +249,7 @@ Name Datastructures::get_area_name(AreaID id)
     return NO_NAME;
 }
 
+// TESTING
 // Returns the coordinates of an area by ID
 // If not found, returns a vector with single item NO_COORD
 std::vector<Coord> Datastructures::get_area_coords(AreaID id)
@@ -251,7 +265,7 @@ std::vector<Coord> Datastructures::get_area_coords(AreaID id)
     return {NO_COORD};
 }
 
-
+// TESTING
 // Returns a vector containing IDs of all stored areas
 std::vector<AreaID> Datastructures::all_areas()
 {
@@ -269,6 +283,7 @@ std::vector<AreaID> Datastructures::all_areas()
     return ids;
 }
 
+// TESTING
 // Links an area as a subarea to another area
 // Returns false if IDs don't exist or if subarea already has a parent
 bool Datastructures::add_subarea_to_area(AreaID id, AreaID parentid)
@@ -290,6 +305,7 @@ bool Datastructures::add_subarea_to_area(AreaID id, AreaID parentid)
     return true;
 }
 
+// TESTING
 // Returns a vector of parent areas in ascending order of hierarchy
 // If ID is not found, returns a vector containing NO_AREA
 std::vector<AreaID> Datastructures::subarea_in_areas(AreaID id)
@@ -302,23 +318,47 @@ std::vector<AreaID> Datastructures::subarea_in_areas(AreaID id)
         return {NO_AREA};
     }
 
-    std::vector<AreaID> result;
+    std::vector<AreaID> upper_areas;
 
     // Traverse up the parent chain until the root is reached
     while (it->second.parent != NO_AREA)
     {
         AreaID parent_id = it->second.parent;
-        result.push_back(parent_id);
+        upper_areas.push_back(parent_id);
         it = areas_.find(parent_id); // Move the iterator to the parent
     }
 
-    return result;
+    return upper_areas;
 }
 
-std::vector<AreaID> Datastructures::all_subareas_in_area(AreaID /*id*/)
+// TESTING
+std::vector<AreaID> Datastructures::all_subareas_in_area(AreaID id)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    auto it = areas_.find(id);
+
+    // If area doesn't exist, return {NO_AREA} vector
+    if (it == areas_.end())
+    {
+        return {NO_AREA};
+    }
+
+    std::vector<AreaID> subareas;
+    for (AreaID child : it->second.children)
+    {
+        // Add direct child
+        subareas.push_back(child);
+
+        // Recursively get all subareas of the child
+        std::vector<AreaID> sub = all_subareas_in_area(child);
+
+        if (!(sub.size() == 1 && sub[0] == NO_AREA))
+        {
+            // Append them to the result vector
+            subareas.insert(subareas.end(), sub.begin(), sub.end());
+        }
+    }
+
+    return subareas;
 }
 
 std::vector<PlaceID> Datastructures::places_closest_to(Coord /*xy*/, PlaceType /*type*/)
