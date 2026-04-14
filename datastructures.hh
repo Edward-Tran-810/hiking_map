@@ -203,12 +203,14 @@ public:
     // two O(1) average hash lookups via places_.at(). Total is O(n).
     std::vector<PlaceID> places_closest_to(Coord xy, PlaceType type);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1) average, O(n) worst case
+    // Short rationale for estimate: find() and erase() on unordered_map are O(1)
+    // average due to hashing, degrading to O(n) only in worst case hash collisions.
     bool remove_place(PlaceID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(d1 + d2), where d1 and d2 are the depths of id1 and id2
+    // Short rationale for estimate: Building the ancestor set of id1 is O(d1);
+    // traversing ancestors of id2 and checking against the set is O(d2) average.
     AreaID common_area_of_subareas(AreaID id1, AreaID id2);
 
     // Estimate of performance:
@@ -266,6 +268,7 @@ private:
         Coord coord;
     };
 
+    // Primary storage for places: PlaceID -> Place
     std::unordered_map<PlaceID, Place> places_;
 
     struct Area {
@@ -276,6 +279,7 @@ private:
         std::vector<AreaID> children;
     };
 
+    // Primary storage for areas: AreaID -> Area
     std::unordered_map<AreaID, Area> areas_;
 };
 

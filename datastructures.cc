@@ -4,6 +4,7 @@
 #include <random>
 #include <cmath>
 #include <algorithm>
+#include <unordered_set>
 
 std::minstd_rand rand_engine; // Reasonably quick pseudo-random generator
 
@@ -388,16 +389,58 @@ std::vector<PlaceID> Datastructures::places_closest_to(Coord xy, PlaceType type)
     return candidates;
 }
 
-bool Datastructures::remove_place(PlaceID /*id*/)
+// Remove the place with the given id and return true if that place exists.
+// Otherwise return false.
+bool Datastructures::remove_place(PlaceID id)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    auto it = places_.find(id);
+
+    // If place doesn't exist, return false
+    if (it == places_.end())
+    {
+        return false;
+    }
+
+    // Remove the place by its id
+    places_.erase(it->first);
+    return true;
 }
 
-AreaID Datastructures::common_area_of_subareas(AreaID /*id1*/, AreaID /*id2*/)
+// Returns the nearest common area in the subarea hierarchy for the areas.
+// If given ids does not exist, or if no common area exists, returns NO_AREA.
+AreaID Datastructures::common_area_of_subareas(AreaID id1, AreaID id2)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    // If either ID doesn't exist, return NO_AREA
+    if (areas_.find(id1) == areas_.end() || areas_.find(id2) == areas_.end())
+    {
+        return NO_AREA;
+    }
+
+    // Collect all ancestors of id1 into a set for O(1) average lookup
+    std::unordered_set<AreaID> id1_ancestors;
+    auto it = areas_.find(id1);
+
+    while (it->second.parent != NO_AREA)
+    {
+        id1_ancestors.insert(it->second.parent);
+        it = areas_.find(it->second.parent);
+    }
+
+    // Traverse ancestors of id2, return first one found in id1_ancestors
+    it = areas_.find(id2);
+    while(it->second.parent != NO_AREA)
+    {
+        auto parent = it->second.parent;
+        // Check if this area exists in id1_ancestors
+        if (id1_ancestors.count(parent))
+        {
+            return parent;
+        }
+
+        it = areas_.find(parent);
+    }
+
+    return NO_AREA;
 }
 
 void Datastructures::clear_ways()
