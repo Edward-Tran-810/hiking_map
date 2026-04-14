@@ -115,79 +115,92 @@ public:
     int place_count();
 
     // Estimate of performance: O(n)
-    // Short rationale for estimate: Clears all elements from the unordered_map, which requires destroying each stored element.
+    // Short rationale for estimate: Clears all elements from all unordered maps, which requires destroying each stored element.
     void clear_all();
 
     // Estimate of performance: O(n)
-    // Short rationale for estimate: Iterates through all elements in the map once.
+    // Short rationale for estimate: Iterates once over all n entries to collect IDs into the vector.
     std::vector<PlaceID> all_places();
 
     // Estimate of performance: O(1) average
-    // Short rationale for estimate: unordered_map lookup and insertion is constant time on average.
+    // Short rationale for estimate: One hash table lookup to check for duplicates and one
+    // insertion, both O(1) average for unordered_map.
     bool add_place(PlaceID id, Name const& name, PlaceType type, Coord xy);
 
     // Estimate of performance: O(1) average
-    // Short rationale for estimate: unordered_map lookup is constant time on average.
+    // Short rationale for estimate: Single unordered_map lookup by ID.
     std::pair<Name, PlaceType> get_place_name_type(PlaceID id);
 
     // Estimate of performance: O(1) average
-    // Short rationale for estimate: unordered_map lookup is constant time on average.
+    // Short rationale for estimate:  Single unordered_map lookup by ID.
     Coord get_place_coord(PlaceID id);
 
     // Estimate of performance: O(n log n)
-    // Short rationale for estimate: Copies all IDs (O(n)) and sorts them using comparison (O(n log n)).
+    // Short rationale for estimate: Collecting all IDs is O(n). Sorting is O(n log n),
+    // each comparator call performs two O(1) average hash lookups, so sorting
+    // remains O(n log n) overall.
     std::vector<PlaceID> places_alphabetically();
 
     // Estimate of performance: O(n log n)
-    // Short rationale for estimate: Copies all IDs (O(n)) and sorts them based on computed distances (O(n log n)).
+    // Short rationale for estimate: Same as places_alphabetically().
     std::vector<PlaceID> places_coord_order();
 
     // Estimate of performance: O(n)
-    // Short rationale for estimate: Requires scanning all elements to find matching names.
+    // Short rationale for estimate: Scanning all n places linearly to find all places having the same name.
     std::vector<PlaceID> find_places_name(Name const& name);
 
     // Estimate of performance: O(n)
-    // Short rationale for estimate: Requires scanning all elements to find matching types.
+    // Short rationale for estimate: Same as find_places_name().
     std::vector<PlaceID> find_places_type(PlaceType type);
 
     // Estimate of performance: O(1) average
-    // Short rationale for estimate: unordered_map modification is constant time on average.
+    // Short rationale for estimate: Single unordered_map lookup and in-place string assignment,
+    // both O(1) average.
     bool change_place_name(PlaceID id, Name const& newname);
 
     // We recommend you implement the operations below only after implementing the ones above
 
-    // Estimate of performance: O(1) average
-    // Short rationale for estimate: unordered_map lookup and insertion are constant time on average.
+    // Estimate of performance: O(k) average, where k = number of boundary coordinates
+    // Short rationale for estimate: One hash map lookup and one insertion are O(1) average.
+    // coords is passed by value then moved into the struct in O(1).
     bool add_area(AreaID id, Name const& name, std::vector<Coord> coords);
 
     // Estimate of performance: O(1) average
-    // Short rationale for estimate: unordered_map lookup is constant time on average.
+    // Short rationale for estimate: Single unordered_map lookup by ID.
     Name get_area_name(AreaID id);
 
-    // Estimate of performance: O(1) average
-    // Short rationale for estimate: unordered_map lookup is constant time on average.
+    // Estimate of performance: O(k), where k = number of boundary coordinates
+    // Short rationale for estimate: unordered_map lookup is O(1) average,
+    // returning the coordinate vector copies k elements.
     std::vector<Coord> get_area_coords(AreaID id);
 
     // Estimate of performance: O(n)
-    // Short rationale for estimate: Must iterate through all areas to collect their IDs.
+    // Short rationale for estimate: Iterates once over all n entries in the areas map
+    // to collect their IDs into the vector.
     std::vector<AreaID> all_areas();
 
     // Estimate of performance: O(1) average
-    // Short rationale for estimate: Lookup of both child and parent in unordered_map is constant time on average; adding to a vector is O(1) amortized.
+    // Short rationale for estimate: Two unordered_map lookups and one vector push_back,
+    // all O(1) average.
     bool add_subarea_to_area(AreaID id, AreaID parentid);
 
-    // Estimate of performance: O(h)
-    // Short rationale for estimate: Traverses the parent chain up to tree height h (number of ancestors) to collect all containing areas.
+    // Estimate of performance: O(d), where d = depth of the area in the hierarchy
+    // Short rationale for estimate: Traverses the parent chain from the given area to
+    // the root. Each step performs one O(1) average hash map lookup.
+    // d is typically much smaller than total number of areas n.
     std::vector<AreaID> subarea_in_areas(AreaID id);
 
     // We recommend you implement the operations below only after implementing the ones above
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(s), where s = total number of subareas (direct + indirect)
+    // Short rationale for estimate: Each node in the subtree is visited exactly once
+    // via DFS recursion, each visit performs one O(1) average hash map lookup.
     std::vector<AreaID> all_subareas_in_area(AreaID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: Scanning all n places to collect candidates is O(n).
+    // partial_sort with k = 3 is O(n log 3) = O(n). Each comparator call performs
+    // two O(1) average hash lookups via places_.at(). Total is O(n).
     std::vector<PlaceID> places_closest_to(Coord xy, PlaceType type);
 
     // Estimate of performance:

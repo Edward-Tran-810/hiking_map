@@ -33,28 +33,25 @@ Datastructures::~Datastructures()
     clear_all(); // Remove all when object is destroyed
 }
 
-// TESTING
 // Returns the total number of places stored
 int Datastructures::place_count()
 {
     return places_.size();
 }
 
-// TESTING
 void Datastructures::clear_all()
 {
     places_.clear();
     areas_.clear();
 }
 
-// TESTING
 // Returns a vector containing IDs of all stored places
 std::vector<PlaceID> Datastructures::all_places()
 {
     std::vector<PlaceID> ids;
 
     // Pre-allocate memory for all place IDs to avoid repeated reallocations during push_back
-    ids.reserve(place_count());
+    ids.reserve(places_.size());
 
     // Iterate through all places and collect their IDs
     for (const auto& [id, place] : places_)
@@ -65,7 +62,6 @@ std::vector<PlaceID> Datastructures::all_places()
     return ids;
 }
 
-// TESTING
 // Adds a new place to the data structure
 // Returns false if the place ID already exists, true otherwise
 bool Datastructures::add_place(PlaceID id, const Name& name, PlaceType type, Coord xy)
@@ -81,7 +77,6 @@ bool Datastructures::add_place(PlaceID id, const Name& name, PlaceType type, Coo
     return true;
 }
 
-// TESTING
 // Returns the name and type of a place by ID
 // If not found, returns NO_NAME and NO_TYPE
 std::pair<Name, PlaceType> Datastructures::get_place_name_type(PlaceID id)
@@ -98,7 +93,6 @@ std::pair<Name, PlaceType> Datastructures::get_place_name_type(PlaceID id)
     return {NO_NAME, PlaceType::NO_TYPE};
 }
 
-// TESTING
 // Returns the coordinates of a place by ID
 // If not found, returns NO_COORD
 Coord Datastructures::get_place_coord(PlaceID id)
@@ -115,7 +109,6 @@ Coord Datastructures::get_place_coord(PlaceID id)
     return NO_COORD;
 }
 
-// TESTING
 // Returns all place IDs sorted alphabetically by their name
 std::vector<PlaceID> Datastructures::places_alphabetically()
 {
@@ -132,7 +125,6 @@ std::vector<PlaceID> Datastructures::places_alphabetically()
     return ids;
 }
 
-// TESTING
 // Returns all place IDs sorted by their distance from origin (0,0)
 // If distances are equal, sort by y-coordinate
 std::vector<PlaceID> Datastructures::places_coord_order()
@@ -163,7 +155,6 @@ std::vector<PlaceID> Datastructures::places_coord_order()
     return ids;
 }
 
-// TESTING
 // Finds and returns all place IDs with a given name
 std::vector<PlaceID> Datastructures::find_places_name(Name const& name)
 {
@@ -181,7 +172,6 @@ std::vector<PlaceID> Datastructures::find_places_name(Name const& name)
     return names;
 }
 
-// TESTING
 // Finds and returns all place IDs with a given type
 std::vector<PlaceID> Datastructures::find_places_type(PlaceType type)
 {
@@ -199,7 +189,6 @@ std::vector<PlaceID> Datastructures::find_places_type(PlaceType type)
     return types;
 }
 
-// TESTING
 // Changes the name of a place with the given ID
 // Returns true if the place exists and was updated, false otherwise
 bool Datastructures::change_place_name(PlaceID id, const Name& newname)
@@ -217,7 +206,6 @@ bool Datastructures::change_place_name(PlaceID id, const Name& newname)
     return false;
 }
 
-// TESTING
 // Adds a new area to the data structure
 // Returns false if the area ID already exists, true otherwise
 bool Datastructures::add_area(AreaID id, const Name& name, std::vector<Coord> coords)
@@ -229,11 +217,12 @@ bool Datastructures::add_area(AreaID id, const Name& name, std::vector<Coord> co
     }
 
     // Insert new area
-    areas_[id] = Area(name, coords, NO_AREA, {});
+    // std::move transfers ownership of the heap-allocated vector data into the
+    // struct instead of copying it - O(1) instead of O(k)
+    areas_[id] = Area(name, std::move(coords), NO_AREA, {});
     return true;
 }
 
-// TESTING
 // Returns the name of an area by ID
 // If not found, returns NO_NAME
 Name Datastructures::get_area_name(AreaID id)
@@ -249,7 +238,6 @@ Name Datastructures::get_area_name(AreaID id)
     return NO_NAME;
 }
 
-// TESTING
 // Returns the coordinates of an area by ID
 // If not found, returns a vector with single item NO_COORD
 std::vector<Coord> Datastructures::get_area_coords(AreaID id)
@@ -265,7 +253,6 @@ std::vector<Coord> Datastructures::get_area_coords(AreaID id)
     return {NO_COORD};
 }
 
-// TESTING
 // Returns a vector containing IDs of all stored areas
 std::vector<AreaID> Datastructures::all_areas()
 {
@@ -283,7 +270,6 @@ std::vector<AreaID> Datastructures::all_areas()
     return ids;
 }
 
-// TESTING
 // Links an area as a subarea to another area
 // Returns false if IDs don't exist or if subarea already has a parent
 bool Datastructures::add_subarea_to_area(AreaID id, AreaID parentid)
@@ -292,8 +278,8 @@ bool Datastructures::add_subarea_to_area(AreaID id, AreaID parentid)
     auto parent_it = areas_.find(parentid);
 
     // If either ID is missing or subarea already belongs elsewhere, return false
-    if (it == areas_.end() or parent_it == areas_.end()
-        or it->second.parent != NO_AREA)
+    if (it == areas_.end() || parent_it == areas_.end() ||
+        it->second.parent != NO_AREA)
     {
         return false;
     }
@@ -305,7 +291,6 @@ bool Datastructures::add_subarea_to_area(AreaID id, AreaID parentid)
     return true;
 }
 
-// TESTING
 // Returns a vector of parent areas in ascending order of hierarchy
 // If ID is not found, returns a vector containing NO_AREA
 std::vector<AreaID> Datastructures::subarea_in_areas(AreaID id)
@@ -331,7 +316,8 @@ std::vector<AreaID> Datastructures::subarea_in_areas(AreaID id)
     return upper_areas;
 }
 
-// TESTING
+// Returns a vector of all direct and indirect areas of a given area
+// If ID is not found, returns a vector containing NO_AREA
 std::vector<AreaID> Datastructures::all_subareas_in_area(AreaID id)
 {
     auto it = areas_.find(id);
@@ -343,6 +329,7 @@ std::vector<AreaID> Datastructures::all_subareas_in_area(AreaID id)
     }
 
     std::vector<AreaID> subareas;
+
     for (AreaID child : it->second.children)
     {
         // Add direct child
@@ -351,20 +338,54 @@ std::vector<AreaID> Datastructures::all_subareas_in_area(AreaID id)
         // Recursively get all subareas of the child
         std::vector<AreaID> sub = all_subareas_in_area(child);
 
-        if (!(sub.size() == 1 && sub[0] == NO_AREA))
-        {
-            // Append them to the result vector
-            subareas.insert(subareas.end(), sub.begin(), sub.end());
-        }
+        // Append them to the result vector
+        subareas.insert(subareas.end(), sub.begin(), sub.end());
     }
 
     return subareas;
 }
 
-std::vector<PlaceID> Datastructures::places_closest_to(Coord /*xy*/, PlaceType /*type*/)
+// Returns a vector of three places (or less) of given type closest to the given coordinate
+// in order of increasing distance
+std::vector<PlaceID> Datastructures::places_closest_to(Coord xy, PlaceType type)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    std::vector<PlaceID> candidates;
+    candidates.reserve(places_.size());
+
+    // Collect all matching places
+    for (const auto& [id, place] : places_)
+    {
+        if (type == PlaceType::NO_TYPE || type == place.type)
+        {
+            candidates.push_back(id);
+        }
+    }
+
+    // partial_sort: only sort the first 3 elements or less
+    size_t k = std::min(candidates.size(), size_t(3));
+    std::partial_sort(candidates.begin(), candidates.begin() + k, candidates.end(),
+                      [this, xy](PlaceID a, PlaceID b) {
+        const Coord& ca = places_.at(a).coord;
+        const Coord& cb = places_.at(b).coord;
+
+        // Calculate squared distance
+        // Convert to datatype long long for preventing int overflow
+        long long da = (long long)(ca.x - xy.x) * (ca.x - xy.x)
+                       + (long long)(ca.y - xy.y) * (ca.y - xy.y);
+        long long db = (long long)(cb.x - xy.x) * (cb.x - xy.x)
+                       + (long long)(cb.y - xy.y) * (cb.y - xy.y);
+
+        if (da != db)
+        {
+            return da < db;
+        }
+
+        return ca.y < cb.y;     // tie-break by y
+    });
+
+    // Update the size of candidates vector
+    candidates.resize(k);
+    return candidates;
 }
 
 bool Datastructures::remove_place(PlaceID /*id*/)
