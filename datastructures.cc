@@ -44,6 +44,7 @@ void Datastructures::clear_all()
 {
     places_.clear();
     areas_.clear();
+    clear_ways();
 }
 
 // Returns a vector containing IDs of all stored places
@@ -445,32 +446,82 @@ AreaID Datastructures::common_area_of_subareas(AreaID id1, AreaID id2)
 
 void Datastructures::clear_ways()
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    ways_.clear();
+    crossroads_.clear();
 }
 
+// Returns a vector containing IDs of all stored ways
 std::vector<WayID> Datastructures::all_ways()
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    std::vector<WayID> ids;
+
+    // Pre-allocate memory for all way IDs to avoid repeated reallocations during push_back
+    ids.reserve(ways_.size());
+
+     // Iterate through all ways and collect their IDs
+    for (const auto& [id, way] : ways_)
+    {
+        ids.push_back(id);
+    }
+
+    return ids;
 }
 
-bool Datastructures::add_way(WayID /*id*/, std::vector<Coord> /*coords*/)
-{   
-    // Replace the line below with your implementation
-    throw NotImplemented();
-}
-
-std::vector<Coord> Datastructures::get_way_coords(WayID /*id*/)
+// Adds a new way with given id and coordinates
+// Returns true if the way is added successfully, otherwise false
+bool Datastructures::add_way(WayID id, std::vector<Coord> coords)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    // Check if way already exists
+    if (ways_.find(id) != ways_.end())
+    {
+        return false;
+    }
+
+    // Store way data (coordinates)
+    ways_[id] = {coords};
+
+    // Get endpoints of the way
+    Coord front = coords.front(); // starting point
+    Coord back  = coords.back();  // ending point
+
+    // Register connections in both directions (undirected graph)
+    // From front, can go to back via this way
+    crossroads_[front].push_back({id, back});
+
+    // From back, can go to front via this way
+    crossroads_[back].push_back({id, front});
+
+    return true;
 }
 
-std::vector<std::pair<WayID, Coord>> Datastructures::ways_from(Coord /*xy*/)
+// Returns the coordinate vector of the way with given ID.
+// If such way doesn’t exist, returns a vector with single item NO_COORD
+std::vector<Coord> Datastructures::get_way_coords(WayID id)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    auto it = ways_.find(id);
+
+    // Check if this way exists
+    if (it == ways_.end())
+    {
+        return {NO_COORD};
+    }
+
+    return it->second.coords;
+}
+
+// Returns a list of ways starting from the given coordinate.
+// If there is no crossroad in that coordinate, an empty vector is returned.
+std::vector<std::pair<WayID, Coord>> Datastructures::ways_from(Coord xy)
+{
+    auto it = crossroads_.find(xy);
+
+    // Check if there are any crossroads int this coordinate
+    if (it == crossroads_.end())
+    {
+        return {};
+    }
+
+    return it->second; // Return vector of ways from this coordinate
 }
 
 std::vector<std::tuple<Coord, WayID, Distance> > Datastructures::route_any(Coord /*fromxy*/, Coord /*toxy*/)

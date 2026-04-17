@@ -213,24 +213,28 @@ public:
     // traversing ancestors of id2 and checking against the set is O(d2) average.
     AreaID common_area_of_subareas(AreaID id1, AreaID id2);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: Clearing two unordered_maps of n ways total
+    // is O(n) proportional to the number of elements stored.
     void clear_ways();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: Iterates once over all n entries to collect IDs.
     std::vector<WayID> all_ways();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(k), where k is the number of coordinates in the way.
+    // Short rationale for estimate: Iterates through k coordinates to copy / store cost O(k),
+    // other operations (map access and insertions) are O(1) on average.
     bool add_way(WayID id, std::vector<Coord> coords);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(k), where k is number of coordinates in the way
+    // Short rationale for estimate: Hash map lookup is O(1) average;
+    // returning the coordinate vector copies k elements.
     std::vector<Coord> get_way_coords(WayID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(k), where k is the number of ways from the given coordinate
+    // Short rationale for estimate: Single hash map lookup by Coord is O(1) average;
+    // returning the vector of d connected ways copies d elements.
     std::vector<std::pair<WayID, Coord>> ways_from(Coord xy);
 
     // We recommend you implement the operations below only after implementing the ones above
@@ -281,6 +285,16 @@ private:
 
     // Primary storage for areas: AreaID -> Area
     std::unordered_map<AreaID, Area> areas_;
+
+    struct Way {
+        std::vector<Coord> coords;
+    };
+
+    // Primary storage for ways: WayID -> Way
+    std::unordered_map<WayID, Way> ways_;
+
+    // Index: Coord -> list of (WayID, other endpoint)
+    std::unordered_map<Coord, std::vector<std::pair<WayID, Coord>>, CoordHash> crossroads_;
 };
 
 #endif // DATASTRUCTURES_HH
