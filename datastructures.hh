@@ -222,9 +222,9 @@ public:
     // Short rationale for estimate: Iterates once over all n entries to collect IDs.
     std::vector<WayID> all_ways();
 
-    // Estimate of performance: O(k), where k is the number of coordinates in the way.
-    // Short rationale for estimate: Iterates through k coordinates to copy / store cost O(k),
-    // other operations (map access and insertions) are O(1) on average.
+    // Estimate of performance: O(k), where k is number of coordinates in the way
+    // Short rationale: Iterates through all coords once to compute total distance,
+    // then stores it. Hash map insertion is O(1) average.
     bool add_way(WayID id, std::vector<Coord> coords);
 
     // Estimate of performance: O(k), where k is number of coordinates in the way
@@ -239,12 +239,15 @@ public:
 
     // We recommend you implement the operations below only after implementing the ones above
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n + m), where n is number of crossroads, m is number of ways
+    // Short rationale: BFS visits each crossroad and way at most once: O(n+m).
+    // Path reconstruction is O(p) where p is path length.
+    // Distance lookup per step is O(1) due to precomputed way distances.
+    // Total dominated by BFS: O(n+m).
     std::vector<std::tuple<Coord, WayID, Distance>> route_any(Coord fromxy, Coord toxy);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(k), where k is the number of connections at each endpoint
+    // Short rationale: ways_ lookup is O(1), removing from crossroads vectors is O(k).
     bool remove_way(WayID id);
 
     // Estimate of performance:
@@ -288,6 +291,7 @@ private:
 
     struct Way {
         std::vector<Coord> coords;
+        Distance way_length;
     };
 
     // Primary storage for ways: WayID -> Way

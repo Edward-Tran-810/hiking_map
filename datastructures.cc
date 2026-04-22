@@ -4,6 +4,7 @@
 #include <random>
 #include <cmath>
 #include <algorithm>
+#include <queue>
 #include <unordered_set>
 
 std::minstd_rand rand_engine; // Reasonably quick pseudo-random generator
@@ -477,8 +478,16 @@ bool Datastructures::add_way(WayID id, std::vector<Coord> coords)
         return false;
     }
 
+    Distance length = 0;
+    for (size_t i = 0; i + 1 < coords.size(); i++)
+    {
+        long long dx = coords.at(i + 1).x - coords.at(i).x;
+        long long dy = coords.at(i + 1).y - coords.at(i).y;
+        length += static_cast<Distance>(std::sqrt(dx*dx + dy*dy));
+    }
+
     // Store way data (coordinates)
-    ways_[id] = {coords};
+    ways_[id] = {coords, length};
 
     // Get endpoints of the way
     Coord front = coords.front(); // starting point
@@ -488,8 +497,12 @@ bool Datastructures::add_way(WayID id, std::vector<Coord> coords)
     // From front, can go to back via this way
     crossroads_[front].push_back({id, back});
 
-    // From back, can go to front via this way
-    crossroads_[back].push_back({id, front});
+    // If the way creates a loop, add 1 endpoint only
+    if (front != back)
+    {
+        // From back, can go to front via this way
+        crossroads_[back].push_back({id, front});
+    }
 
     return true;
 }
@@ -515,7 +528,7 @@ std::vector<std::pair<WayID, Coord>> Datastructures::ways_from(Coord xy)
 {
     auto it = crossroads_.find(xy);
 
-    // Check if there are any crossroads int this coordinate
+    // Check if there are any crossroads in this coordinate
     if (it == crossroads_.end())
     {
         return {};
@@ -524,16 +537,156 @@ std::vector<std::pair<WayID, Coord>> Datastructures::ways_from(Coord xy)
     return it->second; // Return vector of ways from this coordinate
 }
 
-std::vector<std::tuple<Coord, WayID, Distance> > Datastructures::route_any(Coord /*fromxy*/, Coord /*toxy*/)
+// Returns any route between the given crossroads using BFS.
+// If either coordinate is invalid, returns {NO_COORD, NO_WAY, NO_DISTANCE}.
+// If no route exists, returns an empty vector.
+std::vector<std::tuple<Coord, WayID, Distance> > Datastructures::route_any(Coord fromxy, Coord toxy)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    // Check if both coordinates are valid crossroads
+    if (crossroads_.find(fromxy) == crossroads_.end() ||
+        crossroads_.find(toxy) == crossroads_.end())
+    {
+        return {{NO_COORD, NO_WAY, NO_DISTANCE}};
+    }
+
+    // Special case: start equals destination
+    if (fromxy == toxy)
+    {
+        return {{fromxy, NO_WAY, 0}};
+    }
+
+    // BFS setup:
+    // prev maps each coordinate to {way used to reach it, previous coordinate}
+    std::unordered_map<Coord, std::pair<WayID, Coord>, CoordHash> prev;
+    std::queue<Coord> q;
+
+    // Initialize BFS from starting point
+    q.push(fromxy);
+    prev[fromxy] = {NO_WAY, NO_COORD};
+
+    bool found = false;
+
+    // Standard BFS loop
+    while (!q.empty() && !found)
+    {
+        Coord curr = q.front();
+        q.pop();
+        for (const auto& [id, neighbour] : crossroads_.at(curr))
+        {
+            // Visit only unvisited nodes
+            if (prev.find(neighbour) == prev.end())
+            {
+                // Store how we reached this neighbour
+                prev[neighbour] = {id, curr};
+
+                // Stop BFS early if destination is found
+                if (neighbour == toxy)
+                {
+                    found = true;
+                    break;
+                }
+
+                // Add neighbour to queue for further exploration
+                q.push(neighbour);
+            }
+        }
+    }
+
+    // No route found
+    if (!found)
+    {
+        return {};
+    }
+
+    // Reconstruct path from destination back to start
+    std::vector<std::tuple<Coord, WayID, Distance>> route;
+
+    // Trace back using prev map
+    Coord curr = toxy;
+    while (curr != fromxy)
+    {
+        auto [id, prev_coord] = prev.at(curr);
+        route.push_back({curr, NO_WAY, 0});     // distance filled in later
+        curr = prev_coord;
+    }
+
+    route.push_back({fromxy, NO_WAY, 0});
+
+    // Reverse to get route with fromxy -> toxy order
+    std::reverse(route.begin(), route.end());
+
+    // Fill in way ID and distances
+    Distance cumulative_dist = 0;
+
+    for (size_t i = 0; i + 1 < route.size(); i++)
+    {
+        Coord end = std::get<0>(route[i + 1]);
+
+        // Way used when leaving ca toward cb
+        WayID used_way = prev.at(end).first;
+        std::get<1>(route[i]) = used_way;
+
+        cumulative_dist += ways_.at(used_way).way_length;
+
+        // Store cumulative distance at next node
+        std::get<2>(route[i + 1]) = cumulative_dist;
+    }
+
+    // Start point has distance 0
+    std::get<2>(route[0]) = 0;
+
+    return route;
 }
 
-bool Datastructures::remove_way(WayID /*id*/)
+bool Datastructures::remove_way(WayID id)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented();
+    auto it = ways_.find(id);
+
+    // Check if way exists
+    if (it == ways_.end())
+    {
+        return false;
+    }
+
+    // Get two endpoints of this way
+    Coord front = it->second.coords.front();
+    Coord back = it->second.coords.back();
+
+    // Remove way from ways_
+    ways_.erase(it);
+
+    // Helper lambda: remove this way from a given endpoint in crossroads_
+    auto remove_from_crossroad = [&](Coord endpoint)
+    {
+        auto cit = crossroads_.find(endpoint);
+
+        if (cit == crossroads_.end())
+        {
+            return;
+        }
+
+        auto& vec = cit->second;
+
+        // Remove the entry where way ID == id
+        vec.erase(
+            std::remove_if(vec.begin(), vec.end(),
+            [&](const std::pair<WayID, Coord>& entry) {
+                return entry.first == id;
+            }),
+            vec.end()
+        );
+
+        // If no more ways lead to this endpoint, remove it from crossroads_
+        if (vec.empty())
+        {
+            crossroads_.erase(cit);
+        }
+    };
+
+    remove_from_crossroad(front);
+    remove_from_crossroad(back);
+
+    return true;
 }
 
 std::vector<std::tuple<Coord, WayID, Distance> > Datastructures::route_least_crossroads(Coord /*fromxy*/, Coord /*toxy*/)
