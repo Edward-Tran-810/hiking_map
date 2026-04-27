@@ -239,27 +239,29 @@ public:
 
     // We recommend you implement the operations below only after implementing the ones above
 
-    // Estimate of performance: O(n + m), where n is number of crossroads, m is number of ways
-    // Short rationale: BFS visits each crossroad and way at most once: O(n+m).
-    // Path reconstruction is O(p) where p is path length.
-    // Distance lookup per step is O(1) due to precomputed way distances.
-    // Total dominated by BFS: O(n+m).
+    // Estimate of performance: O(V + E), where V is the number of crossroads, E is the number of ways
+    // Short rationale for estimate: BFS visits each crossroad and each way at most once.
+    // Distance computation per edge is O(1) since way_length is precomputed in add_way.
     std::vector<std::tuple<Coord, WayID, Distance>> route_any(Coord fromxy, Coord toxy);
 
     // Estimate of performance: O(k), where k is the number of connections at each endpoint
     // Short rationale: ways_ lookup is O(1), removing from crossroads vectors is O(k).
     bool remove_way(WayID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(V + E), where V is the number of crossroads, E is the number of ways
+    // Short rationale for estimate: Delegates to route_any which uses BFS - BFS naturally finds the path
+    // with fewest crossroads (hops) since it explores level by level. Each crossroad and way is visited
+    // at most once.
     std::vector<std::tuple<Coord, WayID, Distance>> route_least_crossroads(Coord fromxy, Coord toxy);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(V + E), where V is the number of crossroads, E is the number of ways
+    // Short rationale for estimate: DFS visits each crossroad and way at most once.
     std::vector<std::tuple<Coord, WayID>> route_with_cycle(Coord fromxy);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O((V + E) log V), where V is the number of crossroads, E is the number of ways
+    // Short rationale for estimate: Each crossroad is pushed to the priority queue at most
+    // once per incoming way. Each pop and push is O(log V). way_length is precomputed
+    // in add_way so edge relaxation is O(1).
     std::vector<std::tuple<Coord, WayID, Distance>> route_shortest_distance(Coord fromxy, Coord toxy);
 
     // The operation below is a bonus operation (a little more challenging and probably requires googling for an algorithm)
