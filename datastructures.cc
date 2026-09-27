@@ -1,5 +1,4 @@
 // Datastructures.cc
-// TESTING
 
 #include "datastructures.hh"
 #include <random>
