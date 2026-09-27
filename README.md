@@ -1,4 +1,4 @@
-# hiking26 (Tiraka Project — Hiking Map)
+# hiking26 (Tiraka Project - Hiking Map)
  
 A hiking map program built with C++ and Qt for a course assignment. Stores places, areas, and paths, and can find routes between them.
  
@@ -73,7 +73,7 @@ Type `help` to see all available commands.
  
 ## Notes
  
-- Only `datastructures.hh` / `datastructures.cc` were modified — the public
+- Only `datastructures.hh` / `datastructures.cc` were modified - the public
   interface of `Datastructures` was not changed, per assignment rules.
 - Debug output (if any) goes to `cerr`/`qDebug`, not `cout`, so it doesn't
   interfere with `testread`/performance tests.
