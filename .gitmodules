@@ -1,6 +1,0 @@
-[submodule "tests"]
-	path = tests
-	url = ../tests
-[submodule "course_code"]
-	path = course_code
-	url = ../course_code
